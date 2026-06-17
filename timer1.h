@@ -1,3 +1,6 @@
+#ifndef TIMER1_H
+#define TIMER1_H
+
 #include <stdint.h>
 #include <avr/interrupt.h>
 
@@ -9,6 +12,7 @@
 #define OCR1A  (*(volatile uint16_t*)0x88)
 #define TIMSK1 (*(volatile uint8_t*)0x6F)
 #define TIFR1  (*(volatile uint8_t*)0x36)
+#define ICR1A  (*(volatile uint16_t*)0x86)
 
 //====================== BIT POSITIONS ======================
 
@@ -17,6 +21,10 @@
 #define WGM11 1
 #define WGM12 3
 #define WGM13 4
+
+
+#define COM1A1 7
+#define COM0A0 6
 
 // Clock Select bits
 #define CS10 0
@@ -221,3 +229,20 @@ void delay_s(uint16_t value)
 
     timer1_stop();
 }
+
+//====================== PWM ======================
+
+void pwm_init(timer1_clk prescaler,uint8_t top)
+{
+    TCCR1A |= ((1<<WGM11) | (1<<COM1A1));      // PWM Mode + Non-Inverting
+    TCCR1B |= ((1<<WGM12) | (1<<WGM13) | (prescaler & 0x07)); // PWM Mode + Prescaler
+    ICR1A = top;      // Set TOP
+    OCR1A = 0;        // 0% Duty
+}
+
+void duty_cycle(uint8_t duty_percent)
+{
+    uint16_t duty_value = (duty_percent * ICR1A)/100; // Calculate Duty
+    OCR1A = duty_value;      // Update Duty
+}
+#endif
